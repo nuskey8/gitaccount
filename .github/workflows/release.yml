@@ -22,9 +22,17 @@ jobs:
             artifact_name: gitaccount
             asset_name: gitaccount-linux-x86_64
           - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: gitaccount
+            asset_name: gitaccount-linux-arm64
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             artifact_name: gitaccount
             asset_name: gitaccount-linux-musl-x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            artifact_name: gitaccount
+            asset_name: gitaccount-linux-musl-arm64
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: gitaccount
@@ -32,11 +40,15 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: gitaccount
-            asset_name: gitaccount-macos-aarch64
+            asset_name: gitaccount-macos-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: gitaccount.exe
             asset_name: gitaccount-windows-x86_64.exe
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact_name: gitaccount.exe
+            asset_name: gitaccount-windows-arm64.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -49,7 +61,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install musl-tools (Linux)
-        if: matrix.target == 'x86_64-unknown-linux-musl'
+        if: contains(matrix.target, 'musl')
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Cache cargo registry
@@ -80,7 +92,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.asset_name }}
+          name: ${{ matrix.asset_name }}
           path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
   publish-release:
@@ -96,7 +108,7 @@ jobs:
       - name: Create tar.gz archives for each platform
         run: |
           mkdir -p release-archives
-          for dir in ./release/release-*; do
+          for dir in ./release/gitaccount-*; do
             if [ -d "$dir" ]; then
               asset_name=$(basename "$dir")
               tar -czf "release-archives/${asset_name}.tar.gz" -C "$dir" .

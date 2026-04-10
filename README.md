@@ -20,6 +20,28 @@ You can also install it via cargo.
 $ cargo install gitaccount
 ```
 
+## Quick Start
+
+1. Create an account
+  ```bash
+  $ gitaccount create
+  ✔ Profile name · foo
+  ✔ git user.name · foo
+  ✔ git user.email · foo@example.com
+    Success created account `foo`
+  ```
+
+2. Switch accounts
+  ```bash
+  $ git account switch foo
+    Switched `foo` account
+  
+  $ git config --global --get user.name
+  foo
+  $ git config --global --get user.email
+  foo@example.com
+  ```
+
 ## Usage
 
 ```

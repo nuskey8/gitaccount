@@ -118,4 +118,4 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish
-        run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
+        run: cargo publish --token ${{ secrets.CRATES_TOKEN }}

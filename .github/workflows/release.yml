@@ -88,20 +88,26 @@ jobs:
     needs: build-release
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: ./release
 
-      - name: Flatten artifacts
+      - name: Create tar.gz archives for each platform
         run: |
-          find artifacts -type f -exec mv {} . \;
-          rmdir -p artifacts/* 2>/dev/null || true
+          mkdir -p release-archives
+          for dir in ./release/release-*; do
+            if [ -d "$dir" ]; then
+              asset_name=$(basename "$dir")
+              tar -czf "release-archives/${asset_name}.tar.gz" -C "$dir" .
+              ls -lh "release-archives/${asset_name}.tar.gz"
+            fi
+          done
 
       - name: Create Release with Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: gitaccount*
+          files: release-archives/*.tar.gz
           draft: false
           prerelease: false
         env:

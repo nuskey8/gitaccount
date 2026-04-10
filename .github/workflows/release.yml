@@ -5,15 +5,14 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build-release:
     name: Build Release
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:

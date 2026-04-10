@@ -80,7 +80,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts
+          name: release-${{ matrix.asset_name }}
           path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
   publish-release:
@@ -91,12 +91,17 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: release-artifacts
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          find artifacts -type f -exec mv {} . \;
+          rmdir -p artifacts/* 2>/dev/null || true
 
       - name: Create Release with Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: "*"
+          files: gitaccount*
           draft: false
           prerelease: false
         env:

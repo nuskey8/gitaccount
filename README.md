@@ -6,9 +6,9 @@ A CLI tool to manage multiple git accounts
 
 ## Overview
 
-gitaccount is a CLI tool for managing the user names and email addresses configured in git config.
+gitaccount is a CLI tool for managing the usernames and email addresses configured in git config.
 
-When managing separate git accounts for work, university, or other purposes, there is a risk of committing with the wrong name or email address. gitaccount makes it possible to switch these settings with a single command.
+When managing separate git accounts for work, university, or other purposes, there is a risk of committing with the wrong name or email address. gitaccount allows you to switch these settings with a single command.
 
 ## Installation
 
@@ -51,18 +51,23 @@ Commands:
   create  Create a new account profile
   edit    Edit an existing account profile
   delete  Delete an account profile
-  switch  Switch git global config
+  switch  Switch git account
   list    List configured accounts
-  logout  Clear git global config
+  logout  Clear git account
   help    Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help  Print help
 ```
 
+The `switch` and `logout` commands accept `--local` and `--global` options to control the config scope.
+
+- `--global` (default): updates the global git config (`~/.gitconfig`)
+- `--local`: updates the config in the current repository (`.git/config`)
+
 ## .gitaccount
 
-The created account data is saved in `~/.gitaccount` in TOML format.
+Your account data is saved in `~/.gitaccount` in TOML format.
 
 ```toml
 [accounts.foo]
@@ -78,4 +83,4 @@ email = "bar@example.com"
 
 ## License
 
-This library is under the [MIT License](LICENSE).
+This tool is released under the [MIT License](LICENSE).

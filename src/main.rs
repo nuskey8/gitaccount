@@ -46,7 +46,7 @@ enum Commands {
         profile: String,
     },
 
-    /// Switch git global config
+    /// Switch an account globally
     Switch {
         /// Account profile name
         profile: String,
@@ -56,7 +56,7 @@ enum Commands {
     #[command(alias = "ls")]
     List,
 
-    /// Clear git global config
+    /// Clear global git account
     Logout,
 }
 

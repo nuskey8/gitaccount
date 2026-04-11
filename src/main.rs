@@ -46,18 +46,34 @@ enum Commands {
         profile: String,
     },
 
-    /// Switch git global config
+    /// Switch git config
     Switch {
         /// Account profile name
         profile: String,
+
+        /// Update config in the current repository (.git/config)
+        #[arg(long)]
+        local: bool,
+
+        /// Update config in the global git config (~/.gitconfig)
+        #[arg(long = "global", conflicts_with = "local")]
+        r#global: bool,
     },
 
     /// List configured accounts
     #[command(alias = "ls")]
     List,
 
-    /// Clear git global config
-    Logout,
+    /// Clear git config
+    Logout {
+        /// Update config in the current repository (.git/config)
+        #[arg(long)]
+        local: bool,
+
+        /// Update config in the global git config (~/.gitconfig)
+        #[arg(long = "global", conflicts_with = "local")]
+        r#global: bool,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -84,9 +100,13 @@ fn main() {
             email,
         } => edit_account(&profile, name, email),
         Commands::Delete { profile: name } => delete_account(&name),
-        Commands::Switch { profile: name } => switch_account(&name),
+        Commands::Switch {
+            profile: name,
+            local,
+            r#global,
+        } => switch_account(&name, resolve_local_flag(local, r#global)),
         Commands::List => list_accounts(),
-        Commands::Logout => clear_config(),
+        Commands::Logout { local, r#global } => clear_config(resolve_local_flag(local, r#global)),
     };
 
     if let Err(err) = result {
@@ -221,16 +241,19 @@ fn delete_account(profile_name: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn switch_account(profile_name: &str) -> Result<(), String> {
+fn switch_account(profile_name: &str, local: bool) -> Result<(), String> {
     let store = load_store()?;
     let account = store
         .accounts
         .get(profile_name)
         .ok_or_else(|| format!("account `{profile_name}` not found"))?;
 
-    set_git_global("user.name", &account.git_name)?;
-    set_git_global("user.email", &account.email)?;
-    print_process("Switched", &format!("`{}` account", account.name));
+    set_git_config("user.name", &account.git_name, local)?;
+    set_git_config("user.email", &account.email, local)?;
+    print_process(
+        "Switched",
+        &format!("`{}` account ({})", account.name, config_scope_label(local)),
+    );
     Ok(())
 }
 
@@ -269,24 +292,45 @@ fn list_accounts() -> Result<(), String> {
     Ok(())
 }
 
-fn clear_config() -> Result<(), String> {
-    set_git_global("user.name", "")?;
-    set_git_global("user.email", "")?;
-    print_process("Finished", "clear git global user.name and user.email");
+fn clear_config(local: bool) -> Result<(), String> {
+    set_git_config("user.name", "", local)?;
+    set_git_config("user.email", "", local)?;
+    print_process(
+        "Finished",
+        &format!(
+            "clear git {} user.name and user.email",
+            config_scope_label(local)
+        ),
+    );
     Ok(())
 }
 
-fn set_git_global(key: &str, value: &str) -> Result<(), String> {
-    let status = Command::new("git")
-        .args(["config", "--global", key, value])
-        .status()
+fn set_git_config(key: &str, value: &str, local: bool) -> Result<(), String> {
+    let scope = if local { "--local" } else { "--global" };
+
+    let output = Command::new("git")
+        .args(["config", scope, key, value])
+        .output()
         .map_err(|e| format!("failed to run git: {e}"))?;
 
-    if status.success() {
+    if output.status.success() {
         Ok(())
     } else {
-        Err(format!("git config failed for key `{key}`"))
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        if stderr.is_empty() {
+            Err(format!("git config failed for key `{key}`"))
+        } else {
+            Err(format!("git config failed for key `{key}`: {stderr}"))
+        }
     }
+}
+
+fn config_scope_label(local: bool) -> &'static str {
+    if local { "local" } else { "global" }
+}
+
+fn resolve_local_flag(local: bool, _global: bool) -> bool {
+    local
 }
 
 fn get_git_global(key: &str) -> Option<String> {
